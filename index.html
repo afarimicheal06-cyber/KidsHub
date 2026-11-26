@@ -1,0 +1,471 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Little Readers: ABC & Phonics Playground</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Child-friendly rounded Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Fredoka"', 'cursive', 'sans-serif'],
+            sans: ['"Nunito"', 'sans-serif'],
+          },
+          colors: {
+            cream: '#FFFDF7',
+            skySoft: '#EFF8FF',
+            sunshine: '#FFD93D',
+            coral: '#FF6B6B',
+            mint: '#4ECDC4',
+            berry: '#9B5DE5',
+            tangerine: '#FF9F1C',
+          },
+          boxShadow: {
+            'bubbly': '0 8px 0 rgba(0, 0, 0, 0.08)',
+            'bubbly-lg': '0 12px 0 rgba(0, 0, 0, 0.1)',
+            'tile': '0 6px 0 rgba(15, 23, 42, 0.14)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(180deg, #E8F6FF 0%, #FFFDF7 45%, #FFF8EB 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    h1, h2, h3, .font-display {
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    /* Tactile push-button effect */
+    .btn-bubbly {
+      transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s ease;
+    }
+    .btn-bubbly:active {
+      transform: translateY(5px) scale(0.98);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.08) !important;
+    }
+
+    /* Bouncy celebration animation */
+    @keyframes popBounce {
+      0% { transform: scale(1); }
+      35% { transform: scale(1.13) rotate(-2deg); }
+      65% { transform: scale(0.96) rotate(2deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .animate-pop {
+      animation: popBounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Gentle wiggle for wrong quiz choice */
+    @keyframes gentleShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      50% { transform: translateX(8px); }
+      75% { transform: translateX(-5px); }
+    }
+    .animate-wiggle {
+      animation: gentleShake 0.4s ease-in-out;
+    }
+
+    /* Tile highlight pulse during blending */
+    .tile-active {
+      transform: translateY(-8px) scale(1.12) !important;
+      box-shadow: 0 14px 20px -4px rgba(255, 159, 28, 0.45), 0 6px 0 #D97706 !important;
+      border-color: #F59E0B !important;
+      background-color: #FEF3C7 !important;
+      color: #92400E !important;
+    }
+
+    /* Floating star confetti particles */
+    @keyframes floatUpFade {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(0.7) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-130px) scale(1.3) rotate(45deg);
+      }
+    }
+    .confetti-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      animation: floatUpFade 1.1s ease-out forwards;
+    }
+
+    /* Custom scrollbar for horizontal pill strips on mobile */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-amber-200">
+
+  <!-- TOP HEADER & CHILD-FRIENDLY AUDIO CONTROLS -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-4 border-sky-200 px-3 sm:px-6 py-3 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-300 to-orange-400 flex items-center justify-center text-3xl shadow-bubbly border-2 border-amber-500">
+          🦉
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-sky-900 leading-tight tracking-wide">
+            Little Readers
+          </h1>
+          <p class="text-xs sm:text-sm font-bold text-sky-600">ABC & Phonics Playground</p>
+        </div>
+      </div>
+
+      <!-- Star Counter + Voice Speed + Mute Controls -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Earned Stars Pill -->
+        <button
+          id="starBadge"
+          onclick="celebrateStars()"
+          title="Your Star Rewards"
+          class="btn-bubbly flex items-center gap-2 bg-amber-100 hover:bg-amber-200 border-2 border-amber-400 rounded-2xl px-3 sm:px-4 py-2 min-h-[52px] shadow-bubbly"
+        >
+          <span class="text-2xl">⭐</span>
+          <span id="starCount" class="font-display text-xl sm:text-2xl font-bold text-amber-800">0</span>
+        </button>
+
+        <!-- Speed Toggle (Normal vs Slow) -->
+        <button
+          id="speedToggleBtn"
+          onclick="toggleSpeechSpeed()"
+          class="btn-bubbly flex items-center gap-1.5 bg-violet-100 hover:bg-violet-200 border-2 border-violet-300 text-violet-900 rounded-2xl px-3 sm:px-4 py-2 min-h-[52px] font-bold text-sm sm:text-base shadow-bubbly"
+          aria-label="Toggle voice speed"
+        >
+          <span id="speedIcon" class="text-xl">🐇</span>
+          <span id="speedLabel" class="hidden sm:inline">Normal</span>
+        </button>
+
+        <!-- Mute / Sound Toggle -->
+        <button
+          id="muteToggleBtn"
+          onclick="toggleMute()"
+          class="btn-bubbly flex items-center justify-center bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-400 text-emerald-900 rounded-2xl w-[52px] h-[52px] text-2xl shadow-bubbly"
+          aria-label="Toggle sound"
+        >
+          🔊
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-6xl mx-auto px-3 sm:px-6 pt-5 pb-16">
+
+    <!-- 3 STAGE NAVIGATION TABS + QUIZ MODE -->
+    <nav aria-label="Learning Stages" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <button
+        id="tab-alphabet"
+        onclick="switchStage('alphabet')"
+        class="stage-tab btn-bubbly min-h-[72px] rounded-3xl p-3 sm:p-4 border-4 flex items-center justify-center gap-2.5 sm:gap-3 font-display text-lg sm:text-xl font-bold shadow-bubbly bg-rose-500 text-white border-rose-600"
+      >
+        <span class="text-2xl sm:text-3xl">🔤</span>
+        <span>1. Alphabet</span>
+      </button>
+
+      <button
+        id="tab-twoLetter"
+        onclick="switchStage('twoLetter')"
+        class="stage-tab btn-bubbly min-h-[72px] rounded-3xl p-3 sm:p-4 border-4 flex items-center justify-center gap-2.5 sm:gap-3 font-display text-lg sm:text-xl font-bold shadow-bubbly bg-white text-slate-700 border-sky-200 hover:border-sky-400"
+      >
+        <span class="text-2xl sm:text-3xl">🧩</span>
+        <span>2. 2-Letter Words</span>
+      </button>
+
+      <button
+        id="tab-threeLetter"
+        onclick="switchStage('threeLetter')"
+        class="stage-tab btn-bubbly min-h-[72px] rounded-3xl p-3 sm:p-4 border-4 flex items-center justify-center gap-2.5 sm:gap-3 font-display text-lg sm:text-xl font-bold shadow-bubbly bg-white text-slate-700 border-emerald-200 hover:border-emerald-400"
+      >
+        <span class="text-2xl sm:text-3xl">🚀</span>
+        <span>3. 3-Letter Words</span>
+      </button>
+
+      <button
+        id="tab-quiz"
+        onclick="switchStage('quiz')"
+        class="stage-tab btn-bubbly min-h-[72px] rounded-3xl p-3 sm:p-4 border-4 flex items-center justify-center gap-2.5 sm:gap-3 font-display text-lg sm:text-xl font-bold shadow-bubbly bg-white text-slate-700 border-amber-200 hover:border-amber-400"
+      >
+        <span class="text-2xl sm:text-3xl">🌟</span>
+        <span>Find It! Quiz</span>
+      </button>
+    </nav>
+
+    <!-- FRIENDLY STATUS / VOICE BANNER -->
+    <div id="helperBanner" class="mb-6 bg-white border-3 border-sky-200 rounded-3xl p-4 sm:px-6 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+      <div class="flex items-center gap-3">
+        <span id="helperEmoji" class="text-3xl sm:text-4xl">👋</span>
+        <p id="helperMessage" class="font-display text-lg sm:text-xl text-slate-700 font-semibold">
+          Tap any letter card to hear its name, sound, and picture word!
+        </p>
+      </div>
+      <button
+        id="repeatBannerBtn"
+        onclick="repeatLastSpeech()"
+        class="btn-bubbly bg-sky-100 hover:bg-sky-200 text-sky-900 border-2 border-sky-300 rounded-2xl px-4 py-2 min-h-[48px] font-bold text-base flex items-center gap-2"
+      >
+        <span>🔊</span>
+        <span>Hear Again</span>
+      </button>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- STAGE 1: ALPHABET (A-Z)                                   -->
+    <!-- ========================================================= -->
+    <section id="section-alphabet" class="space-y-6">
+      <!-- Filter Controls: All / Vowels / Consonants + Sing ABC -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-rose-50/90 border-2 border-rose-200 rounded-3xl p-3 sm:p-4">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button
+            onclick="setAlphabetFilter('all')"
+            id="filter-all"
+            class="alpha-filter btn-bubbly min-h-[56px] px-5 rounded-2xl font-display text-lg font-bold border-2 bg-rose-500 text-white border-rose-600 shadow-bubbly"
+          >
+            All 26 Letters
+          </button>
+          <button
+            onclick="setAlphabetFilter('vowels')"
+            id="filter-vowels"
+            class="alpha-filter btn-bubbly min-h-[56px] px-5 rounded-2xl font-display text-lg font-bold border-2 bg-white text-amber-800 border-amber-300 hover:bg-amber-50 shadow-bubbly"
+          >
+            🧡 Vowels (A E I O U)
+          </button>
+          <button
+            onclick="setAlphabetFilter('consonants')"
+            id="filter-consonants"
+            class="alpha-filter btn-bubbly min-h-[56px] px-5 rounded-2xl font-display text-lg font-bold border-2 bg-white text-sky-800 border-sky-300 hover:bg-sky-50 shadow-bubbly"
+          >
+            💙 Consonants
+          </button>
+        </div>
+
+        <button
+          onclick="startStageChallenge('alphabet')"
+          class="btn-bubbly min-h-[56px] px-5 rounded-2xl font-display text-lg font-bold bg-amber-400 hover:bg-amber-300 text-amber-950 border-2 border-amber-500 shadow-bubbly flex items-center gap-2"
+        >
+          <span>🎯</span>
+          <span>Letter Challenge</span>
+        </button>
+      </div>
+
+      <!-- Legend for Vowels vs Consonants -->
+      <div class="flex flex-wrap items-center gap-4 px-2 text-sm sm:text-base font-bold text-slate-600">
+        <span class="inline-flex items-center gap-2">
+          <span class="w-4 h-4 rounded-full bg-amber-400 border border-amber-600"></span>
+          Warm Orange Cards = Vowels (A, E, I, O, U)
+        </span>
+        <span class="inline-flex items-center gap-2">
+          <span class="w-4 h-4 rounded-full bg-sky-200 border border-sky-400"></span>
+          Sky Blue Cards = Consonants
+        </span>
+      </div>
+
+      <!-- Alphabet Card Grid -->
+      <div id="alphabetGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
+        <!-- Populated dynamically by JS -->
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- STAGE 2: 2-LETTER WORDS (BLENDING)                        -->
+    <!-- ========================================================= -->
+    <section id="section-twoLetter" class="hidden space-y-6">
+      <!-- Top Bar for Stage 2 -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-sky-100/80 border-2 border-sky-200 rounded-3xl p-4">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-bold text-sky-900">2-Letter Word Blending</h2>
+          <p class="text-base sm:text-lg font-bold text-sky-700">Tap each letter tile, then tap <span class="underline">Blend Word!</span></p>
+        </div>
+        <button
+          onclick="startStageChallenge('twoLetter')"
+          class="btn-bubbly min-h-[60px] px-6 rounded-2xl font-display text-lg font-bold bg-amber-400 hover:bg-amber-300 text-amber-950 border-2 border-amber-500 shadow-bubbly flex items-center gap-2"
+        >
+          <span>⭐</span>
+          <span>2-Letter Quiz</span>
+        </button>
+      </div>
+
+      <!-- 2-Letter Cards Grid -->
+      <div id="twoLetterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+        <!-- Populated dynamically by JS -->
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- STAGE 3: 3-LETTER WORDS (CVC WORDS & WORD BUILDER)        -->
+    <!-- ========================================================= -->
+    <section id="section-threeLetter" class="hidden space-y-6">
+      <!-- Mode Switcher: Read & Listen vs Build the Word -->
+      <div class="bg-emerald-100/80 border-2 border-emerald-200 rounded-3xl p-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+            id="cvcMode-read"
+            onclick="setCvcMode('read')"
+            class="btn-bubbly min-h-[60px] px-6 rounded-2xl font-display text-lg sm:text-xl font-bold border-2 bg-emerald-500 text-white border-emerald-600 shadow-bubbly flex items-center gap-2"
+          >
+            <span>📖</span>
+            <span>Read & Listen</span>
+          </button>
+          <button
+            id="cvcMode-build"
+            onclick="setCvcMode('build')"
+            class="btn-bubbly min-h-[60px] px-6 rounded-2xl font-display text-lg sm:text-xl font-bold border-2 bg-white text-emerald-900 border-emerald-300 hover:bg-emerald-50 shadow-bubbly flex items-center gap-2"
+          >
+            <span>🛠️</span>
+            <span>Build the Word!</span>
+          </button>
+        </div>
+
+        <button
+          onclick="startStageChallenge('threeLetter')"
+          class="btn-bubbly min-h-[60px] px-5 rounded-2xl font-display text-lg font-bold bg-amber-400 hover:bg-amber-300 text-amber-950 border-2 border-amber-500 shadow-bubbly flex items-center gap-2"
+        >
+          <span>🏆</span>
+          <span>3-Letter Quiz</span>
+        </button>
+      </div>
+
+      <!-- Word Family Filter Pills -->
+      <div class="bg-white border-2 border-slate-200 rounded-3xl p-3 sm:p-4">
+        <p class="text-sm sm:text-base font-extrabold text-slate-500 uppercase tracking-wider mb-2.5 px-1">
+          Pick a Word Family:
+        </p>
+        <div id="wordFamilyTabs" class="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-1">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- SUB-VIEW A: READ & LISTEN CVC CARDS -->
+      <div id="cvcReadContainer" class="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- SUB-VIEW B: BUILD THE WORD MINI-GAME -->
+      <div id="cvcBuildContainer" class="hidden">
+        <div class="max-w-2xl mx-auto bg-white border-4 border-emerald-300 rounded-3xl p-6 sm:p-8 shadow-bubbly-lg text-center space-y-6">
+          <div class="flex items-center justify-between">
+            <span class="bg-emerald-100 text-emerald-800 font-extrabold px-4 py-1.5 rounded-full text-sm sm:text-base">
+              Word Builder
+            </span>
+            <button
+              onclick="speakCurrentBuilderWord()"
+              class="btn-bubbly min-h-[52px] px-4 rounded-2xl bg-sky-100 hover:bg-sky-200 border-2 border-sky-300 text-sky-900 font-bold flex items-center gap-2"
+            >
+              <span>🔊</span>
+              <span>Hear Word</span>
+            </button>
+          </div>
+
+          <!-- Picture Clue -->
+          <div class="py-2">
+            <div id="builderEmoji" class="text-7xl sm:text-8xl mb-2 animate-pop">🐱</div>
+            <p id="builderHint" class="text-lg sm:text-xl font-bold text-slate-600">
+              Tap the missing letter to spell the word!
+            </p>
+          </div>
+
+          <!-- 3 Color-Coded CVC Letter Slots -->
+          <div id="builderSlots" class="flex items-center justify-center gap-3 sm:gap-5">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- 3 Big Letter Choices -->
+          <div class="pt-2">
+            <p class="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-3">Choose a Letter</p>
+            <div id="builderChoices" class="flex items-center justify-center gap-4 sm:gap-6">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Builder Feedback + Next Word Button -->
+          <div id="builderFeedback" class="min-h-[48px] flex items-center justify-center font-display text-xl sm:text-2xl font-bold text-emerald-700">
+          </div>
+
+          <div>
+            <button
+              onclick="nextBuilderWord()"
+              class="btn-bubbly min-h-[64px] px-8 rounded-2xl bg-amber-400 hover:bg-amber-300 border-2 border-amber-500 font-display text-xl font-bold text-amber-950 shadow-bubbly"
+            >
+              Next Word ➡️
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- STAGE 4: PLAY & EARN STARS ("FIND IT!" MINI-QUIZ)         -->
+    <!-- ========================================================= -->
+    <section id="section-quiz" class="hidden">
+      <div class="max-w-3xl mx-auto bg-white border-4 border-amber-300 rounded-3xl p-5 sm:p-8 shadow-bubbly-lg text-center space-y-6">
+        <!-- Quiz Category Selector -->
+        <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+          <button
+            onclick="setQuizCategory('mixed')"
+            id="qcat-mixed"
+            class="qcat-btn btn-bubbly min-h-[52px] px-4 rounded-2xl font-display font-bold border-2 bg-amber-400 text-amber-950 border-amber-500"
+          >
+            🌈 All Mix
+          </button>
+          <button
+            onclick="setQuizCategory('alphabet')"
+            id="qcat-alphabet"
+            class="qcat-btn btn-bubbly min-h-[52px] px-4 rounded-2xl font-display font-bold border-2 bg-slate-100 text-slate-700 border-slate-300"
+          >
+            🔤 Letters
+          </button>
+          <button
+            onclick="setQuizCategory('twoLetter')"
+            id="qcat-twoLetter"
+            class="qcat-btn btn-bubbly min-h-[52px] px-4 rounded-2xl font-display font-bold border-2 bg-slate-100 text-slate-700 border-slate-300"
+          >
+            🧩 2-Letter
+          </button>
+          <button
+            onclick="setQuizCategory('threeLetter')"
+            id="qcat-threeLetter"
+            class="qcat-btn btn-bubbly min-h-[52px] px-4 rounded-2xl font-display font-bold border-2 bg-slate-100 text-slate-700 border-slate-300"
+          >
+            🚀 3-Letter
+          </button>
+        </div>
+
+        <!-- Prompt Speaker Card -->
+        <div class="bg-sky-50 border-3 border-sky-200 rounded-3xl p-5 sm:p-6 space-y-3">
+          <p class="text-sm sm:text-base font-extrabold text-sky-600 uppercase tracking-wider">
+            Listen & Find It!
+          </p>
+          <h2 id="quizPromptText" class="font-display text-2xl sm:text-4xl font-bold text-slate-800">
+            Find the letter A!
+          </h2>
+          <div class="pt-1">
+            <button
+              onclick="speakQuizPrompt()"
+              class="btn-bubbly min-h-[64px] px-7 rounded-2xl bg-sky-500 hover:bg-sky-400 text-w
